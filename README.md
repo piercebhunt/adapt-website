@@ -1,4 +1,6 @@
 Simple Static Website for Adapt Sources
 
-Adapt Sources is the LLC behind ButterLedger
+Adapt Sources will be the LLC behind ButterLedger
+
+
 
