@@ -20,6 +20,17 @@ function updateDisplay() {
   document.getElementById('progressPath').style.strokeDasharray = `${progress}, 100`;
 
   const list = document.getElementById('activityList');
+  const emptyState = document.getElementById('emptyState');
+  
+  // Show/hide empty state
+  if (activities.length === 0) {
+    emptyState.classList.add('show');
+    list.style.display = 'none';
+  } else {
+    emptyState.classList.remove('show');
+    list.style.display = 'grid';
+  }
+  
   list.innerHTML = '';
   activities.forEach((act, index) => {
     const li = document.createElement('li');
@@ -28,7 +39,7 @@ function updateDisplay() {
     li.innerHTML = `
       <h3>${act.points > 0 ? '✅' : '⚠️'} ${act.name}</h3>
       <div class="points">${act.points > 0 ? '+' : ''}${act.points} pts ${act.type === 'hourly' ? '/hr' : ''}</div>
-      ${act.type === 'hourly' ? '<div class="timer-display" id="timer-' + index + '">Not running</div>' : ''}
+      ${act.type === 'hourly' ? '<div class="timer-display" id="timer-' + index + '">⏱️ Not running</div>' : ''}
       <div class="controls"></div>
     `;
     
@@ -36,30 +47,32 @@ function updateDisplay() {
     
     if (act.type === 'occurrence') {
       const btn = document.createElement('button');
-      btn.textContent = 'Log It';
+      btn.textContent = '✓ Log It';
       btn.onclick = () => logPoints(act.points, index);
       controls.appendChild(btn);
     } else {
       const startBtn = document.createElement('button');
-      startBtn.textContent = 'Start Timer';
+      startBtn.textContent = '▶ Start';
       startBtn.onclick = () => startTimer(index);
       
       const stopBtn = document.createElement('button');
-      stopBtn.textContent = 'Stop & Claim';
+      stopBtn.textContent = '⏹ Stop & Claim';
       stopBtn.onclick = () => stopTimer(index);
+      stopBtn.style.background = '#48bb78';
       
       controls.appendChild(startBtn);
       controls.appendChild(stopBtn);
     }
     
     const deleteBtn = document.createElement('button');
-    deleteBtn.textContent = 'Delete';
-    deleteBtn.style.background = '#f44336';
+    deleteBtn.textContent = '🗑️ Delete';
     deleteBtn.onclick = () => {
-      activities.splice(index, 1);
-      stopTimer(index); // Clean up if running
-      saveData();
-      updateDisplay();
+      if (confirm(`Delete "${act.name}"?`)) {
+        activities.splice(index, 1);
+        stopTimer(index);
+        saveData();
+        updateDisplay();
+      }
     };
     controls.appendChild(deleteBtn);
     
@@ -68,9 +81,32 @@ function updateDisplay() {
 }
 
 function logPoints(points, index) {
-  const oldTotal = totalPoints;
+  const oldLevel = Math.floor(totalPoints / POINTS_PER_LEVEL) + 1;
   totalPoints += points;
-  if (totalPoints - oldTotal >= 10) confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+  const newLevel = Math.floor(totalPoints / POINTS_PER_LEVEL) + 1;
+  
+  // Confetti for any positive points
+  if (points > 0) {
+    confetti({
+      particleCount: Math.min(points * 10, 150),
+      spread: 70,
+      origin: { y: 0.6 }
+    });
+  }
+  
+  // Special level-up celebration
+  if (newLevel > oldLevel) {
+    showLevelUpModal(newLevel);
+    setTimeout(() => {
+      confetti({
+        particleCount: 200,
+        spread: 100,
+        origin: { y: 0.5 },
+        colors: ['#667eea', '#764ba2', '#FFD700']
+      });
+    }, 100);
+  }
+  
   saveData();
   updateDisplay();
 }
@@ -80,17 +116,37 @@ function addActivity() {
   const points = parseInt(document.getElementById('pointsValue').value);
   const type = document.getElementById('type').value;
   
-  if (name && !isNaN(points)) {
-    activities.push({ name, points, type });
-    saveData();
-    updateDisplay();
-    document.getElementById('activityName').value = '';
-    document.getElementById('pointsValue').value = '';
+  if (!name) {
+    alert('Please enter an activity name');
+    return;
   }
+  
+  if (isNaN(points)) {
+    alert('Please enter a valid point value');
+    return;
+  }
+  
+  activities.push({ name, points, type });
+  saveData();
+  updateDisplay();
+  
+  // Clear form
+  document.getElementById('activityName').value = '';
+  document.getElementById('pointsValue').value = '';
+  
+  // Small success feedback
+  confetti({
+    particleCount: 50,
+    spread: 50,
+    origin: { y: 0.4 }
+  });
 }
 
 function startTimer(index) {
-  if (timers[index]) return;
+  if (timers[index]) {
+    alert('Timer is already running!');
+    return;
+  }
   
   timers[index] = {
     start: Date.now(),
@@ -109,9 +165,10 @@ function updateTimerDisplay(index) {
   
   const display = document.getElementById(`timer-${index}`);
   if (display) {
+    const hrs = Math.floor(elapsed / 3600);
     const mins = Math.floor(elapsed / 60) % 60;
     const secs = Math.floor(elapsed % 60);
-    display.textContent = `Running: ${Math.floor(elapsed/3600)}h ${mins}m ${secs}s → +${earned} pts`;
+    display.textContent = `⏱️ ${hrs}h ${mins}m ${secs}s → ${earned >= 0 ? '+' : ''}${earned} pts`;
   }
 }
 
@@ -123,24 +180,53 @@ function stopTimer(index) {
   delete timers[index];
   
   const display = document.getElementById(`timer-${index}`);
-  if (display) display.textContent = 'Not running';
+  if (display) display.textContent = '⏱️ Not running';
 }
 
 function resetPoints() {
-  if (confirm('Reset points to 0? (Activities stay)')) {
+  if (confirm('Reset all points to 0? (Your activities will stay)')) {
     totalPoints = 0;
     saveData();
     updateDisplay();
   }
 }
 
-// Dark mode
+function showLevelUpModal(level) {
+  const modal = document.getElementById('levelUpModal');
+  document.getElementById('modalLevel').textContent = level;
+  modal.classList.add('show');
+}
+
+function closeLevelUpModal() {
+  document.getElementById('levelUpModal').classList.remove('show');
+}
+
+// Dark mode toggle
 document.getElementById('darkModeToggle').onclick = () => {
   document.body.classList.toggle('dark');
   localStorage.setItem('darkMode', document.body.classList.contains('dark'));
 };
 
 // Load dark mode preference
-if (localStorage.getItem('darkMode') === 'true') document.body.classList.add('dark');
+if (localStorage.getItem('darkMode') === 'true') {
+  document.body.classList.add('dark');
+}
 
+// Close modal on outside click
+document.getElementById('levelUpModal').onclick = (e) => {
+  if (e.target.id === 'levelUpModal') {
+    closeLevelUpModal();
+  }
+};
+
+// Allow Enter key to add activity
+document.getElementById('activityName').addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') addActivity();
+});
+
+document.getElementById('pointsValue').addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') addActivity();
+});
+
+// Initial display
 updateDisplay();
