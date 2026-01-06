@@ -1,176 +1,198 @@
-let activities = JSON.parse(localStorage.getItem('activities')) || [];
-let totalPoints = parseInt(localStorage.getItem('totalPoints')) || 0;
-let timers = {};
+// Daily tasks with points and metadata
+const dailyTasks = [
+  // Health & Wellness (5-60 min activities)
+  { name: 'Brush teeth (morning)', points: 5, time: '2 min', category: 'health', type: 'occurrence' },
+  { name: 'Brush teeth (night)', points: 5, time: '2 min', category: 'health', type: 'occurrence' },
+  { name: 'Shower', points: 8, time: '10 min', category: 'health', type: 'occurrence' },
+  { name: 'Workout (30+ min)', points: 25, time: '30-60 min', category: 'health', type: 'occurrence' },
+  { name: 'Workout (60+ min)', points: 40, time: '60+ min', category: 'health', type: 'occurrence' },
+  { name: 'Morning stretch', points: 5, time: '5 min', category: 'health', type: 'occurrence' },
+  { name: 'Drink water (8 glasses)', points: 8, time: 'Throughout day', category: 'health', type: 'occurrence' },
+  { name: 'Eat healthy breakfast', points: 10, time: '15 min', category: 'health', type: 'occurrence' },
+  { name: 'Eat healthy lunch', points: 10, time: '20 min', category: 'health', type: 'occurrence' },
+  { name: 'Eat healthy dinner', points: 10, time: '30 min', category: 'health', type: 'occurrence' },
+  
+  // Productivity (varies widely)
+  { name: 'Coding practice (30 min)', points: 15, time: '30 min', category: 'productivity', type: 'occurrence' },
+  { name: 'Coding practice (1 hour)', points: 25, time: '1 hour', category: 'productivity', type: 'occurrence' },
+  { name: 'Coding practice (2+ hours)', points: 40, time: '2+ hours', category: 'productivity', type: 'occurrence' },
+  { name: 'Work/Study (focused hour)', points: 20, time: '1 hour', category: 'productivity', type: 'occurrence' },
+  { name: 'Learn something new', points: 15, time: '30 min', category: 'productivity', type: 'occurrence' },
+  { name: 'Read book (30 min)', points: 12, time: '30 min', category: 'productivity', type: 'occurrence' },
+  { name: 'Complete a project task', points: 20, time: 'Varies', category: 'productivity', type: 'occurrence' },
+  
+  // Daily Habits (quick tasks)
+  { name: 'Make bed', points: 5, time: '2 min', category: 'habits', type: 'occurrence' },
+  { name: 'Tidy room', points: 8, time: '10 min', category: 'habits', type: 'occurrence' },
+  { name: 'Do dishes', points: 7, time: '10 min', category: 'habits', type: 'occurrence' },
+  { name: 'Laundry', points: 10, time: '15 min', category: 'habits', type: 'occurrence' },
+  { name: 'Plan tomorrow', points: 8, time: '5 min', category: 'habits', type: 'occurrence' },
+  { name: 'Meditate', points: 12, time: '10 min', category: 'habits', type: 'occurrence' },
+  { name: 'Journal', points: 10, time: '10 min', category: 'habits', type: 'occurrence' },
+  
+  // Social & Personal
+  { name: 'Call family/friend', points: 12, time: '15 min', category: 'social', type: 'occurrence' },
+  { name: 'Quality time with loved ones', points: 15, time: '30+ min', category: 'social', type: 'occurrence' },
+  { name: 'Help someone', points: 15, time: 'Varies', category: 'social', type: 'occurrence' },
+  
+  // Negative habits
+  { name: 'Skip workout', points: -15, time: 'N/A', category: 'health', type: 'occurrence' },
+  { name: 'Junk food binge', points: -12, time: 'N/A', category: 'health', type: 'occurrence' },
+  { name: 'Doomscroll social media (30+ min)', points: -10, time: '30+ min', category: 'habits', type: 'occurrence' }
+];
 
-const POINTS_PER_LEVEL = 100;
+let completedTasks = JSON.parse(localStorage.getItem('completedTasks')) || [];
+let totalPoints = parseInt(localStorage.getItem('totalPoints')) || 0;
+let lastResetDate = localStorage.getItem('lastResetDate') || new Date().toDateString();
+let currentFilter = 'all';
+
+// Check if we need to reset for a new day
+function checkDayReset() {
+  const today = new Date().toDateString();
+  if (lastResetDate !== today) {
+    completedTasks = [];
+    totalPoints = 0;
+    lastResetDate = today;
+    saveData();
+  }
+}
 
 function saveData() {
-  localStorage.setItem('activities', JSON.stringify(activities));
+  localStorage.setItem('completedTasks', JSON.stringify(completedTasks));
   localStorage.setItem('totalPoints', totalPoints);
+  localStorage.setItem('lastResetDate', lastResetDate);
+}
+
+function getStatus(points) {
+  if (points >= 400) return { label: 'Concerning', class: 'concerning', emoji: '⚠️', message: 'Take a break! Balance is important.' };
+  if (points >= 300) return { label: 'Elite', class: 'elite', emoji: '👑', message: 'Absolutely crushing it today!' };
+  if (points >= 200) return { label: 'Extraordinary', class: 'extraordinary', emoji: '⭐', message: 'Outstanding performance!' };
+  if (points >= 100) return { label: 'Goal', class: 'goal', emoji: '🎯', message: 'Daily goal achieved!' };
+  return { label: 'Getting Started', class: '', emoji: '🚀', message: 'Keep going!' };
 }
 
 function updateDisplay() {
+  const status = getStatus(totalPoints);
+  const progress = Math.min((totalPoints / 100) * 100, 100);
+  
   document.getElementById('totalPoints').textContent = totalPoints;
-  
-  const level = Math.floor(totalPoints / POINTS_PER_LEVEL) + 1;
-  const progress = (totalPoints % POINTS_PER_LEVEL) / POINTS_PER_LEVEL * 100;
-  
-  document.getElementById('level').textContent = level;
-  document.getElementById('progressText').textContent = Math.round(progress) + '%';
   document.getElementById('progressBar').style.width = progress + '%';
-
+  document.getElementById('progressText').textContent = `${totalPoints} / 100`;
+  
+  const badge = document.getElementById('statusBadge');
+  badge.textContent = status.label;
+  badge.className = `stat-value status-badge ${status.class}`;
+  
   const grid = document.getElementById('activityList');
-  const emptyState = document.getElementById('emptyState');
-  
-  if (activities.length === 0) {
-    emptyState.classList.add('show');
-    grid.style.display = 'none';
-  } else {
-    emptyState.classList.remove('show');
-    grid.style.display = 'grid';
-  }
-  
   grid.innerHTML = '';
-  activities.forEach((act, index) => {
+  
+  const filteredTasks = currentFilter === 'all' 
+    ? dailyTasks 
+    : dailyTasks.filter(task => task.category === currentFilter);
+  
+  filteredTasks.forEach((task, originalIndex) => {
+    const taskIndex = dailyTasks.indexOf(task);
+    const isCompleted = completedTasks.includes(taskIndex);
+    
     const card = document.createElement('div');
-    card.className = `activity-card ${act.points > 0 ? 'positive' : 'negative'}`;
+    card.className = `activity-card ${task.points > 0 ? 'positive' : 'negative'} ${isCompleted ? 'completed' : ''}`;
     
     card.innerHTML = `
-      <h3>${act.points > 0 ? '↑' : '↓'} ${act.name}</h3>
-      <div class="points">${act.points > 0 ? '+' : ''}${act.points} pts ${act.type === 'hourly' ? '/hr' : ''}</div>
-      ${act.type === 'hourly' ? '<div class="timer-display" id="timer-' + index + '">Not running</div>' : ''}
+      <h3>${task.points > 0 ? '↑' : '↓'} ${task.name}</h3>
+      <div class="task-meta">
+        <span class="task-category">${task.category}</span>
+        <span>${task.time}</span>
+      </div>
+      <div class="points">${task.points > 0 ? '+' : ''}${task.points} pts</div>
       <div class="controls"></div>
     `;
     
     const controls = card.querySelector('.controls');
+    const btn = document.createElement('button');
     
-    if (act.type === 'occurrence') {
-      const btn = document.createElement('button');
-      btn.textContent = 'Log';
-      btn.onclick = () => logPoints(act.points, index);
-      controls.appendChild(btn);
+    if (isCompleted) {
+      btn.textContent = '✓ Completed';
+      btn.className = 'completed';
+      btn.onclick = () => uncompleteTask(taskIndex);
     } else {
-      const startBtn = document.createElement('button');
-      startBtn.textContent = 'Start';
-      startBtn.onclick = () => startTimer(index);
-      
-      const stopBtn = document.createElement('button');
-      stopBtn.textContent = 'Stop';
-      stopBtn.onclick = () => stopTimer(index);
-      
-      controls.appendChild(startBtn);
-      controls.appendChild(stopBtn);
+      btn.textContent = 'Complete';
+      btn.onclick = () => completeTask(taskIndex, task.points);
     }
     
-    const deleteBtn = document.createElement('button');
-    deleteBtn.textContent = 'Delete';
-    deleteBtn.onclick = () => {
-      if (confirm(`Delete "${act.name}"?`)) {
-        activities.splice(index, 1);
-        stopTimer(index);
-        saveData();
-        updateDisplay();
-      }
-    };
-    controls.appendChild(deleteBtn);
-    
+    controls.appendChild(btn);
     grid.appendChild(card);
   });
 }
 
-function logPoints(points, index) {
-  const oldLevel = Math.floor(totalPoints / POINTS_PER_LEVEL) + 1;
+function completeTask(taskIndex, points) {
+  const previousStatus = getStatus(totalPoints);
+  
+  completedTasks.push(taskIndex);
   totalPoints += points;
-  const newLevel = Math.floor(totalPoints / POINTS_PER_LEVEL) + 1;
+  
+  const newStatus = getStatus(totalPoints);
   
   if (points > 0) {
     confetti({
-      particleCount: 50,
+      particleCount: Math.min(points * 2, 100),
       spread: 60,
       origin: { y: 0.6 }
     });
   }
   
-  if (newLevel > oldLevel) {
-    showLevelUpModal(newLevel);
-    setTimeout(() => {
-      confetti({
-        particleCount: 100,
-        spread: 80,
-        origin: { y: 0.5 }
-      });
-    }, 100);
+  // Show milestone modal
+  if (previousStatus.label !== newStatus.label && totalPoints >= 100) {
+    showStatusModal(newStatus);
   }
   
   saveData();
   updateDisplay();
 }
 
-function addActivity() {
-  const name = document.getElementById('activityName').value.trim();
-  const points = parseInt(document.getElementById('pointsValue').value);
-  const type = document.getElementById('type').value;
+function uncompleteTask(taskIndex) {
+  const task = dailyTasks[taskIndex];
+  completedTasks = completedTasks.filter(id => id !== taskIndex);
+  totalPoints -= task.points;
   
-  if (!name || isNaN(points)) return;
-  
-  activities.push({ name, points, type });
   saveData();
   updateDisplay();
-  
-  document.getElementById('activityName').value = '';
-  document.getElementById('pointsValue').value = '';
 }
 
-function startTimer(index) {
-  if (timers[index]) return;
+function filterTasks(category) {
+  currentFilter = category;
   
-  timers[index] = {
-    start: Date.now(),
-    earned: 0,
-    interval: setInterval(() => updateTimerDisplay(index), 1000)
-  };
-  updateTimerDisplay(index);
+  // Update button states
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  event.target.classList.add('active');
+  
+  updateDisplay();
 }
 
-function updateTimerDisplay(index) {
-  if (!timers[index]) return;
-  const elapsed = (Date.now() - timers[index].start) / 1000;
-  const hours = elapsed / 3600;
-  const earned = Math.floor(hours * activities[index].points);
-  timers[index].earned = earned;
-  
-  const display = document.getElementById(`timer-${index}`);
-  if (display) {
-    const hrs = Math.floor(elapsed / 3600);
-    const mins = Math.floor(elapsed / 60) % 60;
-    const secs = Math.floor(elapsed % 60);
-    display.textContent = `${hrs}:${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')} → ${earned >= 0 ? '+' : ''}${earned} pts`;
-  }
-}
-
-function stopTimer(index) {
-  if (!timers[index]) return;
-  
-  clearInterval(timers[index].interval);
-  logPoints(timers[index].earned, index);
-  delete timers[index];
-  
-  const display = document.getElementById(`timer-${index}`);
-  if (display) display.textContent = 'Not running';
-}
-
-function resetPoints() {
-  if (confirm('Reset all points to 0?')) {
+function resetDay() {
+  if (confirm('Reset today\'s progress? This will clear all completed tasks and points.')) {
+    completedTasks = [];
     totalPoints = 0;
     saveData();
     updateDisplay();
   }
 }
 
-function showLevelUpModal(level) {
+function showStatusModal(status) {
   const modal = document.getElementById('levelUpModal');
-  document.getElementById('modalLevel').textContent = level;
+  document.getElementById('statusEmoji').textContent = status.emoji;
+  document.getElementById('statusTitle').textContent = status.label + '!';
+  document.getElementById('statusMessage').textContent = status.message;
   modal.classList.add('show');
+  
+  setTimeout(() => {
+    confetti({
+      particleCount: 150,
+      spread: 100,
+      origin: { y: 0.5 }
+    });
+  }, 100);
 }
 
 function closeLevelUpModal() {
@@ -194,4 +216,6 @@ document.getElementById('levelUpModal').onclick = (e) => {
   }
 };
 
+// Initialize
+checkDayReset();
 updateDisplay();
