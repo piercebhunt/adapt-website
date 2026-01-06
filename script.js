@@ -4,70 +4,104 @@ let timers = {};
 
 const POINTS_PER_LEVEL = 100;
 
+// Arcade sound effects (beep using Web Audio API)
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function playBeep(freq = 440, duration = 100) {
+  const oscillator = audioCtx.createOscillator();
+  const gainNode = audioCtx.createGain();
+  
+  oscillator.connect(gainNode);
+  gainNode.connect(audioCtx.destination);
+  
+  oscillator.frequency.value = freq;
+  oscillator.type = 'square';
+  
+  gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+  gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration / 1000);
+  
+  oscillator.start(audioCtx.currentTime);
+  oscillator.stop(audioCtx.currentTime + duration / 1000);
+}
+
 function saveData() {
   localStorage.setItem('activities', JSON.stringify(activities));
   localStorage.setItem('totalPoints', totalPoints);
 }
 
 function updateDisplay() {
-  document.getElementById('totalPoints').textContent = totalPoints;
+  // Format points with leading zeros (arcade style)
+  document.getElementById('totalPoints').textContent = String(totalPoints).padStart(7, '0');
   
   const level = Math.floor(totalPoints / POINTS_PER_LEVEL) + 1;
   const progress = (totalPoints % POINTS_PER_LEVEL) / POINTS_PER_LEVEL * 100;
   
-  document.getElementById('level').textContent = level;
+  document.getElementById('level').textContent = String(level).padStart(2, '0');
   document.getElementById('progressText').textContent = Math.round(progress) + '%';
-  document.getElementById('progressPath').style.strokeDasharray = `${progress}, 100`;
+  document.getElementById('progressBar').style.width = progress + '%';
 
-  const list = document.getElementById('activityList');
+  const grid = document.getElementById('activityList');
   const emptyState = document.getElementById('emptyState');
   
   // Show/hide empty state
   if (activities.length === 0) {
     emptyState.classList.add('show');
-    list.style.display = 'none';
+    grid.style.display = 'none';
   } else {
     emptyState.classList.remove('show');
-    list.style.display = 'grid';
+    grid.style.display = 'grid';
   }
   
-  list.innerHTML = '';
+  grid.innerHTML = '';
   activities.forEach((act, index) => {
-    const li = document.createElement('li');
-    li.className = `card ${act.points > 0 ? 'positive' : 'negative'}`;
+    const card = document.createElement('div');
+    card.className = `quest-card ${act.points > 0 ? 'positive' : 'negative'}`;
     
-    li.innerHTML = `
-      <h3>${act.points > 0 ? '✅' : '⚠️'} ${act.name}</h3>
-      <div class="points">${act.points > 0 ? '+' : ''}${act.points} pts ${act.type === 'hourly' ? '/hr' : ''}</div>
-      ${act.type === 'hourly' ? '<div class="timer-display" id="timer-' + index + '">⏱️ Not running</div>' : ''}
+    card.innerHTML = `
+      <h3>${act.points > 0 ? '▲' : '▼'} ${act.name}</h3>
+      <div class="points">${act.points > 0 ? '+' : ''}${act.points} PTS ${act.type === 'hourly' ? '/HR' : ''}</div>
+      ${act.type === 'hourly' ? '<div class="timer-display" id="timer-' + index + '">[ IDLE ]</div>' : ''}
       <div class="controls"></div>
     `;
     
-    const controls = li.querySelector('.controls');
+    const controls = card.querySelector('.controls');
     
     if (act.type === 'occurrence') {
       const btn = document.createElement('button');
-      btn.textContent = '✓ Log It';
-      btn.onclick = () => logPoints(act.points, index);
+      btn.className = 'pixel-btn';
+      btn.textContent = '⚡ CLAIM';
+      btn.onclick = () => {
+        playBeep(800, 100);
+        logPoints(act.points, index);
+      };
       controls.appendChild(btn);
     } else {
       const startBtn = document.createElement('button');
-      startBtn.textContent = '▶ Start';
-      startBtn.onclick = () => startTimer(index);
+      startBtn.className = 'pixel-btn';
+      startBtn.textContent = '▶ START';
+      startBtn.onclick = () => {
+        playBeep(600, 100);
+        startTimer(index);
+      };
       
       const stopBtn = document.createElement('button');
-      stopBtn.textContent = '⏹ Stop & Claim';
-      stopBtn.onclick = () => stopTimer(index);
-      stopBtn.style.background = '#48bb78';
+      stopBtn.className = 'pixel-btn';
+      stopBtn.textContent = '■ STOP';
+      stopBtn.onclick = () => {
+        playBeep(700, 150);
+        stopTimer(index);
+      };
       
       controls.appendChild(startBtn);
       controls.appendChild(stopBtn);
     }
     
     const deleteBtn = document.createElement('button');
-    deleteBtn.textContent = '🗑️ Delete';
+    deleteBtn.className = 'pixel-btn danger';
+    deleteBtn.textContent = '✕ DELETE';
     deleteBtn.onclick = () => {
-      if (confirm(`Delete "${act.name}"?`)) {
+      if (confirm(`DELETE QUEST: ${act.name.toUpperCase()}?`)) {
+        playBeep(300, 200);
         activities.splice(index, 1);
         stopTimer(index);
         saveData();
@@ -76,7 +110,7 @@ function updateDisplay() {
     };
     controls.appendChild(deleteBtn);
     
-    list.appendChild(li);
+    grid.appendChild(card);
   });
 }
 
@@ -85,24 +119,30 @@ function logPoints(points, index) {
   totalPoints += points;
   const newLevel = Math.floor(totalPoints / POINTS_PER_LEVEL) + 1;
   
-  // Confetti for any positive points
+  // Arcade-style confetti
   if (points > 0) {
     confetti({
-      particleCount: Math.min(points * 10, 150),
+      particleCount: 100,
       spread: 70,
-      origin: { y: 0.6 }
+      origin: { y: 0.6 },
+      colors: ['#00ff41', '#ff10f0', '#00ffff', '#ffff00']
     });
   }
   
-  // Special level-up celebration
+  // Level up!
   if (newLevel > oldLevel) {
+    playBeep(880, 100);
+    setTimeout(() => playBeep(1046, 100), 150);
+    setTimeout(() => playBeep(1318, 200), 300);
+    
     showLevelUpModal(newLevel);
     setTimeout(() => {
       confetti({
-        particleCount: 200,
-        spread: 100,
+        particleCount: 300,
+        spread: 120,
         origin: { y: 0.5 },
-        colors: ['#667eea', '#764ba2', '#FFD700']
+        colors: ['#00ff41', '#ff10f0', '#00ffff', '#ffff00'],
+        shapes: ['square']
       });
     }, 100);
   }
@@ -117,14 +157,18 @@ function addActivity() {
   const type = document.getElementById('type').value;
   
   if (!name) {
-    alert('Please enter an activity name');
+    playBeep(200, 300);
+    alert('ENTER QUEST NAME!');
     return;
   }
   
   if (isNaN(points)) {
-    alert('Please enter a valid point value');
+    playBeep(200, 300);
+    alert('ENTER POINT VALUE!');
     return;
   }
+  
+  playBeep(1000, 100);
   
   activities.push({ name, points, type });
   saveData();
@@ -134,17 +178,20 @@ function addActivity() {
   document.getElementById('activityName').value = '';
   document.getElementById('pointsValue').value = '';
   
-  // Small success feedback
+  // Arcade insert coin effect
   confetti({
-    particleCount: 50,
-    spread: 50,
-    origin: { y: 0.4 }
+    particleCount: 30,
+    spread: 40,
+    origin: { y: 0.4 },
+    colors: ['#ffff00'],
+    shapes: ['circle']
   });
 }
 
 function startTimer(index) {
   if (timers[index]) {
-    alert('Timer is already running!');
+    playBeep(200, 300);
+    alert('TIMER ALREADY RUNNING!');
     return;
   }
   
@@ -168,7 +215,7 @@ function updateTimerDisplay(index) {
     const hrs = Math.floor(elapsed / 3600);
     const mins = Math.floor(elapsed / 60) % 60;
     const secs = Math.floor(elapsed % 60);
-    display.textContent = `⏱️ ${hrs}h ${mins}m ${secs}s → ${earned >= 0 ? '+' : ''}${earned} pts`;
+    display.textContent = `[ ${hrs}:${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')} ] ${earned >= 0 ? '+' : ''}${earned}`;
   }
 }
 
@@ -180,11 +227,12 @@ function stopTimer(index) {
   delete timers[index];
   
   const display = document.getElementById(`timer-${index}`);
-  if (display) display.textContent = '⏱️ Not running';
+  if (display) display.textContent = '[ IDLE ]';
 }
 
 function resetPoints() {
-  if (confirm('Reset all points to 0? (Your activities will stay)')) {
+  if (confirm('RESET ALL POINTS?\n(QUESTS REMAIN)')) {
+    playBeep(300, 300);
     totalPoints = 0;
     saveData();
     updateDisplay();
@@ -193,23 +241,29 @@ function resetPoints() {
 
 function showLevelUpModal(level) {
   const modal = document.getElementById('levelUpModal');
-  document.getElementById('modalLevel').textContent = level;
+  document.getElementById('modalLevel').textContent = String(level).padStart(2, '0');
   modal.classList.add('show');
 }
 
 function closeLevelUpModal() {
+  playBeep(1200, 150);
   document.getElementById('levelUpModal').classList.remove('show');
 }
 
 // Dark mode toggle
 document.getElementById('darkModeToggle').onclick = () => {
+  playBeep(500, 80);
   document.body.classList.toggle('dark');
   localStorage.setItem('darkMode', document.body.classList.contains('dark'));
+  
+  const btn = document.getElementById('darkModeToggle');
+  btn.textContent = document.body.classList.contains('dark') ? 'DAY MODE' : 'NIGHT MODE';
 };
 
 // Load dark mode preference
 if (localStorage.getItem('darkMode') === 'true') {
   document.body.classList.add('dark');
+  document.getElementById('darkModeToggle').textContent = 'DAY MODE';
 }
 
 // Close modal on outside click
@@ -219,13 +273,42 @@ document.getElementById('levelUpModal').onclick = (e) => {
   }
 };
 
-// Allow Enter key to add activity
+// Enter key shortcuts
 document.getElementById('activityName').addEventListener('keypress', (e) => {
   if (e.key === 'Enter') addActivity();
 });
 
 document.getElementById('pointsValue').addEventListener('keypress', (e) => {
   if (e.key === 'Enter') addActivity();
+});
+
+// Konami code easter egg (up up down down left right left right b a)
+let konamiCode = [];
+const konamiSequence = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
+
+document.addEventListener('keydown', (e) => {
+  konamiCode.push(e.key);
+  if (konamiCode.length > 10) konamiCode.shift();
+  
+  if (konamiCode.join(',') === konamiSequence.join(',')) {
+    totalPoints += 999;
+    saveData();
+    updateDisplay();
+    
+    for (let i = 0; i < 5; i++) {
+      setTimeout(() => {
+        confetti({
+          particleCount: 200,
+          spread: 180,
+          origin: { y: 0.6 },
+          colors: ['#00ff41', '#ff10f0', '#00ffff', '#ffff00']
+        });
+        playBeep(440 + (i * 100), 100);
+      }, i * 200);
+    }
+    
+    konamiCode = [];
+  }
 });
 
 // Initial display
