@@ -3,73 +3,85 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Life Gamifier ⚡</title>
+  <title>LIFE GAMIFIER</title>
   <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
 <body>
+  <div class="scanlines"></div>
   <div class="container">
-    <header class="dashboard">
-      <div class="header-content">
-        <h1>⚡ Life Gamifier</h1>
-        <button id="darkModeToggle" class="icon-btn" aria-label="Toggle dark mode">
-          <span class="sun-icon">☀️</span>
-          <span class="moon-icon">🌙</span>
-        </button>
+    
+    <header class="arcade-header">
+      <div class="marquee">
+        <h1>★ LIFE GAMIFIER ★</h1>
       </div>
-      <div class="stats">
-        <div class="stat-card">
-          <div class="stat-label">Points</div>
-          <div class="stat-value" id="totalPoints">0</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Level</div>
-          <div class="level-display">
-            <span class="stat-value" id="level">1</span>
-            <div class="progress-circle">
-              <svg viewBox="0 0 36 36">
-                <path class="bg" d="M18 2.0845 a 15.9155 15.9155 0 1 0 0 31.831 a 15.9155 15.9155 0 1 0 0 -31.831" />
-                <path class="progress" id="progressPath" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 1 1 0 31.831 a 15.9155 15.9155 0 1 1 0 -31.831" />
-              </svg>
-              <span id="progressText">0%</span>
-            </div>
-          </div>
-        </div>
-      </div>
+      <button id="darkModeToggle" class="pixel-btn small">NIGHT MODE</button>
     </header>
 
-    <section class="add-activity">
-      <h2>➕ Add New Activity</h2>
-      <div class="form-grid">
-        <input type="text" id="activityName" placeholder="Activity name (e.g., Exercise)">
-        <input type="number" id="pointsValue" placeholder="Points (+ or -)">
-        <select id="type">
-          <option value="occurrence">Per occurrence</option>
-          <option value="hourly">Per hour</option>
+    <div class="score-board">
+      <div class="score-panel">
+        <div class="label">SCORE</div>
+        <div class="value" id="totalPoints">0000000</div>
+      </div>
+      <div class="score-panel">
+        <div class="label">LEVEL</div>
+        <div class="value" id="level">01</div>
+      </div>
+      <div class="score-panel">
+        <div class="label">PROGRESS</div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressBar"></div>
+        </div>
+        <div class="percent" id="progressText">0%</div>
+      </div>
+    </div>
+
+    <section class="game-section">
+      <div class="section-header">
+        <span>▶</span> ADD QUEST <span>◀</span>
+      </div>
+      <div class="arcade-form">
+        <input type="text" id="activityName" placeholder="QUEST NAME" class="arcade-input">
+        <input type="number" id="pointsValue" placeholder="PTS" class="arcade-input small">
+        <select id="type" class="arcade-input">
+          <option value="occurrence">ONCE</option>
+          <option value="hourly">HOURLY</option>
         </select>
-        <button onclick="addActivity()" class="add-btn">+ Add Activity</button>
+        <button onclick="addActivity()" class="pixel-btn">INSERT COIN</button>
       </div>
     </section>
 
-    <section class="activities">
-      <h2>🎯 Your Activities</h2>
+    <section class="game-section">
+      <div class="section-header">
+        <span>▶</span> ACTIVE QUESTS <span>◀</span>
+      </div>
       <div id="emptyState" class="empty-state">
-        <div class="empty-icon">🎮</div>
-        <h3>No activities yet!</h3>
-        <p>Add your first activity above to start leveling up your life.</p>
+        <div class="game-over">
+          ▲▲▲<br>
+          NO QUESTS<br>
+          INSERT COIN<br>
+          TO START<br>
+          ▼▼▼
+        </div>
       </div>
-      <ul id="activityList"></ul>
+      <div id="activityList" class="quest-grid"></div>
     </section>
 
-    <button class="reset-btn" onclick="resetPoints()">🔄 Reset All Points</button>
+    <button class="pixel-btn danger full-width" onclick="resetPoints()">⚠ RESET GAME ⚠</button>
   </div>
 
-  <!-- Level Up Modal -->
-  <div id="levelUpModal" class="modal">
-    <div class="modal-content">
-      <h2>🎉 Level Up!</h2>
-      <p>You've reached <strong>Level <span id="modalLevel"></span></strong>!</p>
-      <button onclick="closeLevelUpModal()">Awesome!</button>
+  <!-- Level Up Screen -->
+  <div id="levelUpModal" class="game-modal">
+    <div class="modal-screen">
+      <div class="modal-border">
+        <div class="blink">★★★ LEVEL UP ★★★</div>
+        <div class="level-big">LEVEL <span id="modalLevel"></span></div>
+        <div class="continue">PRESS START</div>
+        <button onclick="closeLevelUpModal()" class="pixel-btn">START</button>
+      </div>
     </div>
   </div>
 
