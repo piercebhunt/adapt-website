@@ -11,7 +11,7 @@
   <div class="container">
     <header>
       <div class="header-top">
-        <h1>Life Gamifier</h1>
+        <h1>Daily Life Gamifier</h1>
         <button id="darkModeToggle" class="mode-toggle" aria-label="Toggle theme">
           <svg class="sun" width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
             <circle cx="10" cy="10" r="4"/>
@@ -26,20 +26,26 @@
       <div class="stats-grid">
         <div class="stat">
           <span class="stat-value" id="totalPoints">0</span>
-          <span class="stat-label">Points</span>
+          <span class="stat-label">Today's Points</span>
         </div>
         <div class="stat">
-          <span class="stat-value" id="level">1</span>
-          <span class="stat-label">Level</span>
+          <span class="stat-value status-badge" id="statusBadge">Getting Started</span>
+          <span class="stat-label">Daily Status</span>
         </div>
         <div class="stat progress-stat">
           <div class="progress-wrapper">
             <div class="progress-track">
               <div class="progress-fill" id="progressBar"></div>
             </div>
-            <span class="progress-label" id="progressText">0%</span>
+            <span class="progress-label" id="progressText">0 / 100</span>
           </div>
         </div>
+      </div>
+      <div class="status-guide">
+        <span>100 pts: Goal</span>
+        <span>200 pts: Extraordinary</span>
+        <span>300 pts: Elite</span>
+        <span>400+ pts: Concerning</span>
       </div>
     </header>
 
