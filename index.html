@@ -1,41 +1,53 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="icon" type="image/butterledger-icon" href="ButterLedger.ico">
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Investments</title>
-    <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            margin: 40px;
-            color: #333;
-        }
-        h1 {
-            font-size: 24px;
-            color: #000;
-        }
-        ul {
-            list-style: none;
-            padding: 0;
-        }
-        li {
-            margin: 20px 0;
-        }
-        a {
-            text-decoration: none;
-            color: #007bff;
-        }
-        a:hover {
-            text-decoration: underline;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Life Gamifier ⚡</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
 <body>
-    <h1>Pending Time Investments</h1>
-    <ul>
-        <li><a href="butterledger.html">ButterLedger</a></li>
-        <!-- Add more projects as needed -->
-    </ul>
+  <div class="container">
+    <header class="dashboard">
+      <h1>Life Gamifier</h1>
+      <div class="stats">
+        <div class="points">Points: <span id="totalPoints">0</span></div>
+        <div class="level">
+          Level <span id="level">1</span>
+          <div class="progress-circle">
+            <svg viewBox="0 0 36 36">
+              <path class="bg" d="M18 2.0845 a 15.9155 15.9155 0 1 0 0 31.831 a 15.9155 15.9155 0 1 0 0 -31.831" />
+              <path class="progress" id="progressPath" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 1 1 0 31.831 a 15.9155 15.9155 0 1 1 0 -31.831" />
+            </svg>
+            <span id="progressText">0%</span>
+          </div>
+        </div>
+      </div>
+      <button id="darkModeToggle">🌙 Dark Mode</button>
+    </header>
+
+    <section class="add-activity">
+      <h2>Add New Activity</h2>
+      <div class="form-grid">
+        <input type="text" id="activityName" placeholder="e.g., Vibe coding">
+        <input type="number" id="pointsValue" placeholder="Points (e.g., 1 or -5)">
+        <select id="type">
+          <option value="occurrence">Per occurrence</option>
+          <option value="hourly">Per hour</option>
+        </select>
+        <button onclick="addActivity()">+ Add</button>
+      </div>
+    </section>
+
+    <section class="activities">
+      <h2>Your Activities</h2>
+      <ul id="activityList"></ul>
+    </section>
+
+    <button class="reset-btn" onclick="resetPoints()">Reset All Points</button>
+  </div>
+
+  <script src="script.js"></script>
 </body>
 </html>
