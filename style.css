@@ -1,1 +1,183 @@
-adaptsources.com
+:root {
+  --bg: #f8f9fa;
+  --card-bg: white;
+  --text: #333;
+  --positive: #4caf50;
+  --negative: #f44336;
+  --accent: #2196f3;
+  --shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+body.dark {
+  --bg: #121212;
+  --card-bg: #1e1e1e;
+  --text: #e0e0e0;
+  --shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  margin: 0;
+  padding: 20px;
+  transition: background 0.3s;
+}
+
+.container {
+  max-width: 800px;
+  margin: auto;
+}
+
+.dashboard {
+  text-align: center;
+  padding: 30px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 16px;
+  margin-bottom: 30px;
+  box-shadow: var(--shadow);
+}
+
+.stats {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 40px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+.points {
+  font-size: 2.5rem;
+  font-weight: bold;
+}
+
+.level {
+  font-size: 1.8rem;
+  position: relative;
+}
+
+.progress-circle {
+  width: 100px;
+  height: 100px;
+  position: relative;
+  display: inline-block;
+}
+
+.progress-circle svg {
+  transform: rotate(-90deg);
+}
+
+.bg {
+  fill: none;
+  stroke: rgba(255,255,255,0.3);
+  stroke-width: 3.8;
+}
+
+.progress {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 4;
+  stroke-linecap: round;
+  transition: stroke-dasharray 0.5s ease;
+}
+
+#progressText {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.add-activity, .activities {
+  background: var(--card-bg);
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow);
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  align-items: end;
+}
+
+input, select, button {
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  font-size: 1rem;
+}
+
+button {
+  background: var(--accent);
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+button:hover {
+  transform: translateY(-2px);
+}
+
+#activityList {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 15px;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+}
+
+.card {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 15px;
+  box-shadow: var(--shadow);
+  border-left: 6px solid;
+}
+
+.card.positive { border-color: var(--positive); }
+.card.negative { border-color: var(--negative); }
+
+.card h3 {
+  margin: 0 0 10px;
+  font-size: 1.2rem;
+}
+
+.card .points {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.card .controls {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.card .timer-display {
+  margin: 10px 0;
+  font-weight: bold;
+  color: var(--accent);
+}
+
+.reset-btn {
+  width: 100%;
+  padding: 15px;
+  background: #ff5722;
+  font-size: 1.1rem;
+}
+
+#darkModeToggle {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: rgba(255,255,255,0.2);
+}
